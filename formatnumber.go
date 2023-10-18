@@ -57,44 +57,42 @@ func formatNumberString(x string, precision int, thousand string, decimalStr str
 func FormatNumber(value interface{}, precision int, thousand string, decimalStr string) string {
 	v := reflect.ValueOf(value)
 	var x string
-	if precision > 0 {
-		switch v.Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			x = fmt.Sprintf("%d", v.Int())
-			if precision > 0 {
-				x += "." + strings.Repeat("0", precision)
-			}
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			x = fmt.Sprintf("%d", v.Uint())
-			if precision > 0 {
-				x += "." + strings.Repeat("0", precision)
-			}
-		case reflect.Float32, reflect.Float64:
-			x = fmt.Sprintf(fmt.Sprintf("%%.%df", precision), v.Float())
-		case reflect.Struct:
-			switch v.Type().String() {
-			case "decimal.Decimal":
-				x = value.(decimal.Decimal).StringFixed(int32(precision))
-			default:
-				panic("Unsupported type - " + v.Type().String() + " - kind " + v.Kind().String())
-			}
-		case reflect.Ptr:
-			switch v.Type().String() {
-			case "*big.Rat":
-				x = value.(*big.Rat).FloatString(precision)
-			case "*apd.Decimal":
-				v := value.(*apd.Decimal)
-				d := apd.New(0, 0)
-				apd.BaseContext.WithPrecision(uint32(v.NumDigits())+uint32(precision)).Quantize(d, v, int32(-precision))
-				x = d.Text('f')
-			case "*decimal.Decimal":
-				x = value.(*decimal.Decimal).StringFixed(int32(precision))
-			default:
-				panic("Unsupported type - " + v.Type().String() + " - kind " + v.Kind().String())
-			}
+	switch v.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		x = fmt.Sprintf("%d", v.Int())
+		if precision > 0 {
+			x += "." + strings.Repeat("0", precision)
+		}
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		x = fmt.Sprintf("%d", v.Uint())
+		if precision > 0 {
+			x += "." + strings.Repeat("0", precision)
+		}
+	case reflect.Float32, reflect.Float64:
+		x = fmt.Sprintf(fmt.Sprintf("%%.%df", precision), v.Float())
+	case reflect.Struct:
+		switch v.Type().String() {
+		case "decimal.Decimal":
+			x = value.(decimal.Decimal).StringFixed(int32(precision))
 		default:
 			panic("Unsupported type - " + v.Type().String() + " - kind " + v.Kind().String())
 		}
+	case reflect.Ptr:
+		switch v.Type().String() {
+		case "*big.Rat":
+			x = value.(*big.Rat).FloatString(precision)
+		case "*apd.Decimal":
+			v := value.(*apd.Decimal)
+			d := apd.New(0, 0)
+			apd.BaseContext.WithPrecision(uint32(v.NumDigits())+uint32(precision)).Quantize(d, v, int32(-precision))
+			x = d.Text('f')
+		case "*decimal.Decimal":
+			x = value.(*decimal.Decimal).StringFixed(int32(precision))
+		default:
+			panic("Unsupported type - " + v.Type().String() + " - kind " + v.Kind().String())
+		}
+	default:
+		panic("Unsupported type - " + v.Type().String() + " - kind " + v.Kind().String())
 	}
 
 	return formatNumberString(x, precision, thousand, decimalStr)
